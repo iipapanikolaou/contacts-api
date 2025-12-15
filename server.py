@@ -12,7 +12,27 @@ contacts = [
 #GET    - /contacts/<id> - list specific contact
 #POST   - /contacts - add contact
 #PUT    - /contacts/<id> - edit contact
-#DELETE - /contacts - delete contact
+#DELETE - /contacts/<id> - delete contact
+
+def successResponse(sucessMessage = None,data = None):
+    successMsg = {
+        'success': True,
+        'message':sucessMessage,
+        'data': data,
+    }
+
+    return successMsg
+
+def errorResponse(errorMessage = 'Unexpected error',errorCode = 400):
+    errorMsg = {
+        'data': None,
+        'error': {
+            'message': errorMessage,
+            'code': errorCode
+        }
+    }
+
+    return errorMsg
 
 
 @app.route('/')
@@ -21,26 +41,32 @@ def homepage():
 
 @app.get('/contacts')
 def list_contacts():
-    return jsonify(contacts)
+    return jsonify(successResponse(contacts))
 
 @app.get('/contacts/<id>')
 def list_contact(id):
 
     if not id.isdigit():
-        return ('No matching record for requested id',400)
+        return (jsonify(errorResponse('No matching record for requested id',400)),400)
     
     for contact in contacts:
         if contact['id'] == int(id):
-            return jsonify(contact)
+            return jsonify(successResponse(contact))
         
-    return ('No matching record for requested id',400)
+    return (jsonify(
+        errorResponse('No matching record for requested id',400)),
+        400
+        )
 
 @app.post('/contacts')
 def add_contact():
     payload = request.get_json(silent=True)
 
     if not payload:
-        return ('Error while parsing request. Check formatting again.',400)
+        return (jsonify(
+        errorResponse('UnsupportedFormat.',400)),
+        400
+        )
     
     contactName = payload.get('name')
     contactNumber = payload.get('number')
@@ -54,20 +80,26 @@ def add_contact():
 
         contacts.append(newContact)
 
-        return newContact
+        return jsonify(successResponse('Contact added to the catalog',newContact))
     
-    return ('One or more fields are ommited.',400)
+    return (jsonify(
+        errorResponse('InvalidSchema',400)),
+        400
+        )
 
 @app.put('/contacts/<id>')
 def edit_contact(id):
 
     if not id.isdigit():
-        return ('No matching record for requested id',400)
+        return (jsonify(errorResponse('No matching record for requested id',400)),400)
 
     payload = request.get_json(silent=True)
 
     if not payload:
-        return ('Error while parsing request. Check formatting again.',400)
+        return (jsonify(
+        errorResponse('UnsupportedFormat.',400)),
+        400
+        )
 
     contactName = payload.get('name')
     contactNumber = payload.get('number')
@@ -77,9 +109,9 @@ def edit_contact(id):
             contact['name'] = contactName if contactName else contact['name']
             contact['number'] = contactNumber if contactNumber else contact['number']
             
-            return jsonify(contact)
+            return jsonify(successResponse('Contact changed',contact))
         
-    return ('No matching record for requested id',400)
+    return (jsonify(errorResponse('No matching record for requested id',400)),400)
 
 @app.delete('/contacts/<id>')
 def delete_contact(id):
@@ -87,9 +119,9 @@ def delete_contact(id):
     for contact in contacts:
         if contact['id'] == int(id):
             contacts.remove(contact)
-            return (f'Contact {id} removed successfully from the catalog')
+            return jsonify(successResponse('Contact deleted',contact))
         
-    return ('No matching record for requested id',400)
+    return (jsonify(errorResponse('No matching record for requested id',400)),400)
 
 app.run(debug=True)
 
