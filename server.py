@@ -47,15 +47,15 @@ def list_contacts():
 def list_contact(id):
 
     if not id.isdigit():
-        return (jsonify(errorResponse('No matching record for requested id',400)),400)
+        return (jsonify(errorResponse('ResourceNotFound',404)),404)
     
     for contact in contacts:
         if contact['id'] == int(id):
             return jsonify(successResponse(contact))
         
     return (jsonify(
-        errorResponse('No matching record for requested id',400)),
-        400
+        errorResponse('ResourceNotFound',404)),
+        404
         )
 
 @app.post('/contacts')
@@ -64,7 +64,7 @@ def add_contact():
 
     if not payload:
         return (jsonify(
-        errorResponse('UnsupportedFormat.',400)),
+        errorResponse('InvalidPayload',400)),
         400
         )
     
@@ -80,7 +80,7 @@ def add_contact():
 
         contacts.append(newContact)
 
-        return jsonify(successResponse('Contact added to the catalog',newContact))
+        return jsonify(successResponse('Contact added to the catalog',newContact)),201
     
     return (jsonify(
         errorResponse('InvalidSchema',400)),
@@ -91,13 +91,13 @@ def add_contact():
 def edit_contact(id):
 
     if not id.isdigit():
-        return (jsonify(errorResponse('No matching record for requested id',400)),400)
+        return (jsonify(errorResponse('ResourceNotFound',404)),404)
 
     payload = request.get_json(silent=True)
 
     if not payload:
         return (jsonify(
-        errorResponse('UnsupportedFormat.',400)),
+        errorResponse('UnsupportedPayload',400)),
         400
         )
 
@@ -109,9 +109,9 @@ def edit_contact(id):
             contact['name'] = contactName if contactName else contact['name']
             contact['number'] = contactNumber if contactNumber else contact['number']
             
-            return jsonify(successResponse('Contact changed',contact))
+            return jsonify(successResponse('Contact changed',contact)),201
         
-    return (jsonify(errorResponse('No matching record for requested id',400)),400)
+    return (jsonify(errorResponse('ResourceNotFound',404)),404)
 
 @app.delete('/contacts/<id>')
 def delete_contact(id):
@@ -121,7 +121,7 @@ def delete_contact(id):
             contacts.remove(contact)
             return jsonify(successResponse('Contact deleted',contact))
         
-    return (jsonify(errorResponse('No matching record for requested id',400)),400)
+    return (jsonify(errorResponse('ResourceNotFound',404)),404)
 
 app.run(debug=True)
 
