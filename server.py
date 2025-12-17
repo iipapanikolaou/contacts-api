@@ -35,7 +35,7 @@ def successResponse(
         response = {
             "success": True,
             "data": {
-                "items": {},
+                "items": [],
                 "page": 1,
                 "limit": 5,
                 "total": 1
@@ -117,14 +117,26 @@ def catch_unhandled_errors(e):
     return jsonify(response), 500
 
 @app.get("/contacts", defaults={'page':1,'limit':5})
-def contacts(page,limit):
+def contacts(page, limit):
 
     totalContacts = contacts.count()
 
-    response = successResponse(data=contacts,
-                               page=page,
-                               limit=limit,
-                               totalEntries=totalContacts)
+    start = (page -1) * 5
+    end = start + limit - 1
+
+    if end > totalContacts:
+        abort(400)
+
+    items=[]
+    for contact in contacts:
+        if contact['id'] >= start and contact['id'] <= end:
+            items.append(contact)
+    
+    response=successResponse(bulk=True)
+    response['data']['items'] = items
+    response['data']['page'] = page
+    response['data']['limit'] = limit
+    response['data']['total'] = totalContacts
 
     return jsonify(response), 200
 
@@ -135,7 +147,8 @@ def list_contact(id):
     for contact in contacts:
         if contact["id"] == id:
 
-            response = successResponse(data=contact)
+            response = successResponse(bulk=False)
+            response['data'] = contact
 
             return jsonify(response), 200
 
@@ -161,7 +174,8 @@ def add_contact():
 
         contacts.append(newContact)
 
-        response = successResponse(newContact)
+        response = successResponse(bulk=False)
+        response['data'] = newContact
 
         return jsonify(response), 201
 
@@ -184,7 +198,10 @@ def edit_contact(id):
             contact["name"] = contactName if contactName else contact["name"]
             contact["number"] = contactNumber if contactNumber else contact["number"]
 
-            return jsonify(createResponse(data=contact)), 200
+            response= successResponse(bulk=False)
+            response['data'] = contact
+
+            return jsonify(response), 200
 
     abort(404)
 
