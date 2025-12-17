@@ -28,25 +28,22 @@ def errorResponse(
     return response
 
 def successResponse(
-    data: list | dict,
-    page: int = 1,
-    limit: int = 5,
-    totalEntries: int = 0,
+    bulk: bool,
 ):
     
-    if type(data) == list:
+    if bulk == True:
         response = {
             "success": True,
             "data": {
-                "items": data,
-                "page": page,
-                "limit": limit,
-                "total": totalEntries
+                "items": {},
+                "page": 1,
+                "limit": 5,
+                "total": 1
             },
             "error": None,
         }
 
-    response = {"success": True, "data": data, "error": None}
+    response = {"success": True, "data": {}, "error": None}
 
     return response
 
@@ -134,12 +131,13 @@ def contacts(page,limit):
 
 @app.get("/contacts/<int:id>")
 def list_contact(id):
- 
-    response = {"success": True, "data": {"items":data,"page":1,"limit":5,"total":total items}, "error": None}
 
     for contact in contacts:
         if contact["id"] == id:
-            return jsonify(createResponse(data=contact)), 200
+
+            response = successResponse(data=contact)
+
+            return jsonify(response), 200
 
     abort(404)
 
@@ -163,7 +161,9 @@ def add_contact():
 
         contacts.append(newContact)
 
-        return jsonify(createResponse(data=newContact)), 201
+        response = successResponse(newContact)
+
+        return jsonify(response), 201
 
     abort(400)
 
