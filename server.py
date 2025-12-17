@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, abort
+import re
 
 # GET    - /contacts - list contacts
 # GET    - /contacts/<id> - list specific contact
@@ -14,11 +15,12 @@ contacts = [
     {"id": 3, "name": "peter", "number": "6985645842"},
 ]
 
+
 def errorResponse(
     errMsg: str,
     errCode: int,
 ):
-    
+
     response = {
         "success": False,
         "data": None,
@@ -27,11 +29,13 @@ def errorResponse(
 
     return response
 
+
 def successResponse():
 
     response = {"success": True, "data": None, "error": None}
 
     return response
+
 
 # def createResponse(
 #     data: list | dict | None = None,
@@ -39,12 +43,12 @@ def successResponse():
 #     errMsg: str | None = None,
 #     errCode: int | None = None,
 # ):
-    
+
 #     #This function returns a JSON response based on given arguments.
 #     #Usage examples:
 #     #Success: createResponse(data = data)
 #     #Failure: createResponse(success=False,errMsg='<short status message>',errCode = '<http status code>')
-    
+
 #     if not success:
 #         response = {
 #             "success": False,
@@ -52,7 +56,7 @@ def successResponse():
 #             "error": {"message": errMsg, "code": errCode},
 #         }
 #         return response
-    
+
 #     response = {"success": True, "data": {"items":data,"page":1,"limit":5,"total":total items}, "error": None}
 
 #     if success:
@@ -63,37 +67,41 @@ def successResponse():
 #             "data": None,
 #             "error": {"message": errMsg, "code": errCode},
 #         }
-    
+
 #     return response
 
 
 @app.errorhandler(404)
 def resource_not_found(e):
 
-    response = errorResponse('SourceNotFound',404)
+    response = errorResponse("SourceNotFound", 404)
 
     return jsonify(response), 404
+
 
 @app.errorhandler(405)
 def invalid_request(e):
 
-    response = errorResponse('InvalidRequest',405)
+    response = errorResponse("InvalidRequest", 405)
 
     return jsonify(response), 405
+
 
 @app.errorhandler(400)
 def bad_request(e):
 
-    response = errorResponse('BadRequest',400)
+    response = errorResponse("BadRequest", 400)
 
     return jsonify(response), 400
+
 
 @app.errorhandler(500)
 def internal_server_error(e):
 
-    response = errorResponse('InternalServerError',500)
+    response = errorResponse("InternalServerError", 500)
 
     return jsonify(response), 500
+
 
 @app.errorhandler(Exception)
 def catch_unhandled_errors(e):
@@ -102,27 +110,47 @@ def catch_unhandled_errors(e):
 
     return jsonify(response), 500
 
+
 @app.get("/contacts")
-def list_contacts(page, limit):
+def list_contacts():
 
-    totalContacts = contacts.count()
-
-    start = (page -1) * 5
-    end = start + limit - 1
-
-    if end > totalContacts:
+    page = request.args.get(key="page", default='1')
+    if not re.search(r"^[1-9]\d*$", page):
         abort(400)
 
-    items=[]
-    for contact in contacts:
-        if contact['id'] >= start and contact['id'] <= end:
-            items.append(contact)
+    limit = request.args.get(key="limit", default='5')
+    if not re.search(r"^[1-9]\d*$", limit):
+        abort(400)
+
+    page = int(page)
+    limit = int(limit)
+    total = len(contacts)
+
+    # Checks if pages before the requested page were sufficient enough to show all available data.
+    # If they were, items key will display an empty list.
+    # If page = 1, the condition will always be True
+    if (page - 1) * limit >= total:
+
+        data = {"items": [], "page": page, "limit": limit, "total": total}
+
+        response = successResponse()
+        response["data"] = data
+
+        return jsonify(response), 200
     
-    response=successResponse(bulk=True)
-    response['data']['items'] = items
-    response['data']['page'] = page
-    response['data']['limit'] = limit
-    response['data']['total'] = totalContacts
+
+    startIndex = (page - 1) * limit
+    endIndex = startIndex + limit if startIndex + limit <= total else total
+
+    subcontacts = contacts[startIndex:endIndex]
+    items=[]
+    for contact in subcontacts:
+        items.append(contact)
+
+    data = {"items": items, "page": page, "limit": limit, "total": total}
+
+    response = successResponse()
+    response['data']=data
 
     return jsonify(response), 200
 
@@ -134,7 +162,7 @@ def list_contact(id):
         if contact["id"] == id:
 
             response = successResponse()
-            response['data'] = contact
+            response["data"] = contact
 
             return jsonify(response), 200
 
@@ -161,7 +189,7 @@ def add_contact():
         contacts.append(newContact)
 
         response = successResponse()
-        response['data'] = newContact
+        response["data"] = newContact
 
         return jsonify(response), 201
 
@@ -184,8 +212,8 @@ def edit_contact(id):
             contact["name"] = contactName if contactName else contact["name"]
             contact["number"] = contactNumber if contactNumber else contact["number"]
 
-            response= successResponse()
-            response['data'] = contact
+            response = successResponse()
+            response["data"] = contact
 
             return jsonify(response), 200
 
@@ -198,7 +226,7 @@ def delete_contact(id):
     for contact in contacts:
         if contact["id"] == id:
             contacts.remove(contact)
-            return ('', 204)
+            return ("", 204)
 
     abort(404)
 
