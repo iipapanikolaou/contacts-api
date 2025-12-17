@@ -1,5 +1,11 @@
 from flask import Flask, request, jsonify, abort
 
+# GET    - /contacts - list contacts
+# GET    - /contacts/<id> - list specific contact
+# POST   - /contacts - add contact
+# PUT    - /contacts/<id> - edit contact
+# DELETE - /contacts/<id> - delete contact
+
 app = Flask(__name__)
 
 contacts = [
@@ -8,15 +14,9 @@ contacts = [
     {"id": 3, "name": "peter", "number": "6985645842"},
 ]
 
-# GET    - /contacts - list contacts
-# GET    - /contacts/<id> - list specific contact
-# POST   - /contacts - add contact
-# PUT    - /contacts/<id> - edit contact
-# DELETE - /contacts/<id> - delete contact
-
 def errorResponse(
-    errMsg: str = None,
-    errCode: int = None,
+    errMsg: str,
+    errCode: int,
 ):
     
     response = {
@@ -27,23 +27,9 @@ def errorResponse(
 
     return response
 
-def successResponse(
-    bulk: bool,
-):
-    
-    if bulk == True:
-        response = {
-            "success": True,
-            "data": {
-                "items": [],
-                "page": 1,
-                "limit": 5,
-                "total": 1
-            },
-            "error": None,
-        }
+def successResponse():
 
-    response = {"success": True, "data": {}, "error": None}
+    response = {"success": True, "data": None, "error": None}
 
     return response
 
@@ -116,8 +102,8 @@ def catch_unhandled_errors(e):
 
     return jsonify(response), 500
 
-@app.get("/contacts", defaults={'page':1,'limit':5})
-def contacts(page, limit):
+@app.get("/contacts")
+def list_contacts(page, limit):
 
     totalContacts = contacts.count()
 
@@ -147,7 +133,7 @@ def list_contact(id):
     for contact in contacts:
         if contact["id"] == id:
 
-            response = successResponse(bulk=False)
+            response = successResponse()
             response['data'] = contact
 
             return jsonify(response), 200
@@ -174,7 +160,7 @@ def add_contact():
 
         contacts.append(newContact)
 
-        response = successResponse(bulk=False)
+        response = successResponse()
         response['data'] = newContact
 
         return jsonify(response), 201
@@ -198,7 +184,7 @@ def edit_contact(id):
             contact["name"] = contactName if contactName else contact["name"]
             contact["number"] = contactNumber if contactNumber else contact["number"]
 
-            response= successResponse(bulk=False)
+            response= successResponse()
             response['data'] = contact
 
             return jsonify(response), 200
@@ -212,7 +198,7 @@ def delete_contact(id):
     for contact in contacts:
         if contact["id"] == id:
             contacts.remove(contact)
-            return ("", 204)
+            return ('', 204)
 
     abort(404)
 
