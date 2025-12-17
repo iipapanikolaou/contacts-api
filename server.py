@@ -28,12 +28,20 @@ def errorResponse(
 
     return response
 
+def success_response(data=None):
+    return {
+        "success": True,
+        "data": data,
+        "error": None
+    }
 
-def successResponse():
-
-    response = {"success": True, "data": None, "error": None}
-
-    return response
+def paginated_response(items, page:int, limit:int, total:int):
+    return success_response({
+        "items": items,
+        "page": page,
+        "limit": limit,
+        "total": total
+    })
 
 
 @app.errorhandler(404)
@@ -98,11 +106,7 @@ def list_contacts():
     # If page = 1, the condition will always be True
     if (page - 1) * limit >= total:
 
-        data = {"items": [], "page": page, "limit": limit, "total": total}
-
-        response = successResponse()
-        response["data"] = data
-
+        response = paginated_response([],page,limit,total)
         return jsonify(response), 200
     
 
@@ -110,12 +114,8 @@ def list_contacts():
     endIndex = startIndex + limit if startIndex + limit <= total else total
 
     items = contacts[startIndex:endIndex]
-    
-    data = {"items": items, "page": page, "limit": limit, "total": total}
 
-    response = successResponse()
-    response['data']=data
-
+    response = success_response(items)
     return jsonify(response), 200
 
 
@@ -125,9 +125,7 @@ def list_contact(id):
     for contact in contacts:
         if contact["id"] == id:
 
-            response = successResponse()
-            response["data"] = contact
-
+            response = success_response(contact)
             return jsonify(response), 200
 
     abort(404)
@@ -150,10 +148,7 @@ def add_contact():
             "number": contactNumber,
         }
 
-        contacts.append(newContact)
-
-        response = successResponse()
-        response["data"] = newContact
+        response = success_response(newContact)
 
         return jsonify(response), 201
 
@@ -176,8 +171,7 @@ def edit_contact(id):
             contact["name"] = contactName if contactName else contact["name"]
             contact["number"] = contactNumber if contactNumber else contact["number"]
 
-            response = successResponse()
-            response["data"] = contact
+            response = success_response(contact)
 
             return jsonify(response), 200
 
