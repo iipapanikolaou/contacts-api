@@ -148,6 +148,7 @@ def add_contact():
             "number": contactNumber,
         }
 
+        contacts.append(newContact)
         response = success_response(newContact)
 
         return jsonify(response), 201
