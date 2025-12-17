@@ -57,7 +57,7 @@ def internal_server_error(e):
     return jsonify(createResponse(success=False,errMsg='InternalServerError',errCode = 500)),500
 
 @app.errorhandler(Exception)
-def catch_unhandled_errors():
+def catch_unhandled_errors(e):
     return jsonify(createResponse(success=False,errMsg='InternalServerError',errCode = 500)),500
     
 
