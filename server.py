@@ -109,11 +109,8 @@ def list_contacts():
     startIndex = (page - 1) * limit
     endIndex = startIndex + limit if startIndex + limit <= total else total
 
-    subcontacts = contacts[startIndex:endIndex]
-    items=[]
-    for contact in subcontacts:
-        items.append(contact)
-
+    items = contacts[startIndex:endIndex]
+    
     data = {"items": items, "page": page, "limit": limit, "total": total}
 
     response = successResponse()
