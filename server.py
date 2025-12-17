@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify, abort
-import re
 
 # GET    - /contacts - list contacts
 # GET    - /contacts/<id> - list specific contact
@@ -35,40 +34,6 @@ def successResponse():
     response = {"success": True, "data": None, "error": None}
 
     return response
-
-
-# def createResponse(
-#     data: list | dict | None = None,
-#     success: bool = True,
-#     errMsg: str | None = None,
-#     errCode: int | None = None,
-# ):
-
-#     #This function returns a JSON response based on given arguments.
-#     #Usage examples:
-#     #Success: createResponse(data = data)
-#     #Failure: createResponse(success=False,errMsg='<short status message>',errCode = '<http status code>')
-
-#     if not success:
-#         response = {
-#             "success": False,
-#             "data": None,
-#             "error": {"message": errMsg, "code": errCode},
-#         }
-#         return response
-
-#     response = {"success": True, "data": {"items":data,"page":1,"limit":5,"total":total items}, "error": None}
-
-#     if success:
-#         response = {"success": True, "data": data, "error": None}
-#     else:
-#         response = {
-#             "success": False,
-#             "data": None,
-#             "error": {"message": errMsg, "code": errCode},
-#         }
-
-#     return response
 
 
 @app.errorhandler(404)
@@ -114,13 +79,15 @@ def catch_unhandled_errors(e):
 @app.get("/contacts")
 def list_contacts():
 
-    page = request.args.get(key="page", default='1')
-    if not re.search(r"^[1-9]\d*$", page):
+    try:
+        page = int(request.args.get("page", 1))
+        limit = int(request.args.get("limit", 5))
+    except ValueError:
         abort(400)
 
-    limit = request.args.get(key="limit", default='5')
-    if not re.search(r"^[1-9]\d*$", limit):
+    if page <= 0 or limit <= 0:
         abort(400)
+
 
     page = int(page)
     limit = int(limit)
