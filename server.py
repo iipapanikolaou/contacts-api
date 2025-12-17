@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify,abort
+from flask import Flask, request, jsonify, abort
 
 app = Flask(__name__)
 
@@ -37,29 +37,29 @@ def createResponse(
             "error": {"message": errMsg, "code": errCode},
         }
     
-    return jsonify(response)
+    return response
 
 
 @app.errorhandler(404)
 def resource_not_found(e):
-    return createResponse(success=False,errMsg='SourceNotFound',errCode = 404),404
+    return jsonify(createResponse(success=False,errMsg='SourceNotFound',errCode = 404)),404
 
 @app.errorhandler(405)
 def invalid_request(e):
-    return createResponse(success=False,errMsg='InvalidRequest',errCode = 405),405
+    return jsonify(createResponse(success=False,errMsg='InvalidRequest',errCode = 405)),405
 
 @app.errorhandler(400)
 def bad_request(e):
-    return createResponse(success=False,errMsg='BadRequest',errCode = 400),400
+    return jsonify(createResponse(success=False,errMsg='BadRequest',errCode = 400)),400
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    return createResponse(success=False,errMsg='InternalServerError',errCode = 500),500
+    return jsonify(createResponse(success=False,errMsg='InternalServerError',errCode = 500)),500
 
 
 @app.get("/contacts")
 def list_contacts():
-    return (createResponse(data=contacts), 200)
+    return jsonify(createResponse(data=contacts)), 200
 
 
 @app.get("/contacts/<int:id>")
@@ -67,7 +67,7 @@ def list_contact(id):
 
     for contact in contacts:
         if contact["id"] == id:
-            return (createResponse(data=contact), 200)
+            return jsonify(createResponse(data=contact)), 200
 
     abort(404)
 
@@ -91,7 +91,7 @@ def add_contact():
 
         contacts.append(newContact)
 
-        return createResponse(data=newContact), 201
+        return jsonify(createResponse(data=newContact)), 201
 
     abort(400)
 
@@ -112,7 +112,7 @@ def edit_contact(id):
             contact["name"] = contactName if contactName else contact["name"]
             contact["number"] = contactNumber if contactNumber else contact["number"]
 
-            return (createResponse(data=contact), 200)
+            return jsonify(createResponse(data=contact)), 200
 
     abort(404)
 
