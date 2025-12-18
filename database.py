@@ -45,10 +45,21 @@ def create_contact(name, number):
     conn.commit()
 
     if cursor.lastrowid:
-        rows = cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?')
+        rows = cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?', (cursor.lastrowid,))
         return rows.fetchone()
     
     return None
 
+def update_contact(contact_id, name, number):
 
-    return cursor.lastrowid
+    conn = sqlite3.connect(DATABASE_FILENAME)
+    cursor = conn.cursor()
+
+    cursor.execute('UPDATE contacts SET name = ?, number = ? WHERE id = ?',(name, number, contact_id,))
+    conn.commit()
+
+    if cursor.rowcount >= 1:
+        rows = cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?',(cursor.lastrowid,))
+        return rows.fetchone()
+    
+    return None

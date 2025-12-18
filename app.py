@@ -5,7 +5,7 @@
 # DELETE - /contacts/<id> - delete contact
 
 from flask import Flask, request, jsonify, abort
-from database import init_db,get_contact_by_id,create_contact
+from database import init_db,get_contact_by_id,create_contact, update_contact
 
 app = Flask(__name__)
 if not init_db():
@@ -155,17 +155,17 @@ def add_contact():
             abort(500)
         
         newContact = {
-            'id' : int(newContact[0]),
-            'name' : newContact[1],
-            'number' : newContact[2]
+            'id' : int(contactRaw[0]),
+            'name' : contactRaw[1],
+            'number' : contactRaw[2]
         }
-        
+
         response = success_response(newContact)
 
         return jsonify(response), 201
 
 
-@app.put("/contacts/<int:id>")
+@app.put("/contacts/id")
 def edit_contact(id):
 
     payload = request.get_json(silent=True)
@@ -176,17 +176,20 @@ def edit_contact(id):
     contactName = payload.get("name")
     contactNumber = payload.get("number")
 
-    for contact in contacts:
-        if contact["id"] == id:
-            contact["name"] = contactName if contactName else contact["name"]
-            contact["number"] = contactNumber if contactNumber else contact["number"]
+    contactRaw = update_contact(id,contactName,contactNumber)
 
-            response = success_response(contact)
+    if not contactRaw:
+        abort(500)
+    
+    newContact = {
+        'id' : int(contactRaw[0]),
+        'name' : contactRaw[1],
+        'number' : contactRaw[2]
+    }
 
-            return jsonify(response), 200
+    response = success_response(newContact)
 
-    abort(404)
-
+    return jsonify(response), 201
 
 @app.delete("/contacts/<int:id>")
 def delete_contact(id):
