@@ -1,19 +1,20 @@
-from flask import Flask, request, jsonify, abort
-
 # GET    - /contacts - list contacts
 # GET    - /contacts/<id> - list specific contact
 # POST   - /contacts - add contact
 # PUT    - /contacts/<id> - edit contact
 # DELETE - /contacts/<id> - delete contact
 
+from flask import Flask, request, jsonify, abort
+from database import init_db
+
 app = Flask(__name__)
+init_db()
 
 contacts = [
     {"id": 1, "name": "john", "number": "6985699842"},
     {"id": 2, "name": "adam", "number": "6985239842"},
     {"id": 3, "name": "peter", "number": "6985645842"},
 ]
-
 
 def errorResponse(errMsg: str,errCode: int):
 

@@ -18,7 +18,3 @@ def init_db():
     conn.commit()
     cursor.close()
     conn.close()
-
-
-if __name__ == '__main__':
-    init_db()
