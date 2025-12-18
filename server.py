@@ -15,10 +15,7 @@ contacts = [
 ]
 
 
-def errorResponse(
-    errMsg: str,
-    errCode: int,
-):
+def errorResponse(errMsg: str,errCode: int):
 
     response = {
         "success": False,
