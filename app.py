@@ -149,17 +149,17 @@ def add_contact():
 
     if contactName and contactNumber:
         
-        newContactID = create_contact(contactName,contactNumber)
+        contactRaw = create_contact(contactName,contactNumber)
 
-        if not newContactID:
+        if not contactRaw:
             abort(500)
         
         newContact = {
-            'id': int(newContactID),
-            'name': contactName,
-            'number':contactNumber
+            'id' : int(newContact[0]),
+            'name' : newContact[1],
+            'number' : newContact[2]
         }
-
+        
         response = success_response(newContact)
 
         return jsonify(response), 201

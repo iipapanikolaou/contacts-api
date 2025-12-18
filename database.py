@@ -44,4 +44,11 @@ def create_contact(name, number):
     cursor.execute('INSERT INTO contacts (name,number) VALUES(?,?)',(name,number,))
     conn.commit()
 
+    if cursor.lastrowid:
+        rows = cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?')
+        return rows.fetchone()
+    
+    return None
+
+
     return cursor.lastrowid
