@@ -3,10 +3,10 @@ import sqlite3
 DATABASE_FILENAME = 'contacts.db'
 
 def init_db():
-    conn = sqlite3.connect(DATABASE_FILENAME)
-    cursor = conn.cursor()
 
-    try:
+    with sqlite3.connect(DATABASE_FILENAME) as conn:
+        cursor = conn.cursor()
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS contacts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -17,14 +17,6 @@ def init_db():
             );
         """)
         conn.commit()
-    except sqlite3.Error:
-        cursor.close()
-        conn.close()
-        return False
-    
-    cursor.close()
-    conn.close()
-    return True
 
 def get_contacts(page,limit):
 
