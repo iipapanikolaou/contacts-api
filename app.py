@@ -76,12 +76,12 @@ def internal_server_error(e):
     return jsonify(response), 500
 
 
-@app.errorhandler(Exception)
-def catch_unhandled_errors(e):
+# @app.errorhandler(Exception)
+# def catch_unhandled_errors(e):
 
-    response = errorResponse(str(e),500)
+#     response = errorResponse(str(e),500)
 
-    return jsonify(response), 500
+#     return jsonify(response), 500
 
 
 @app.get("/contacts")
@@ -96,15 +96,13 @@ def list_contacts():
     if page <= 0 or limit <= 0:
         abort(400)
 
-    contactsRaw = get_contacts(page,limit)
+    contacts = get_contacts(page,limit)
     total = count_contacts()
 
-    if len(contactsRaw) == 0:
+    if len(contacts) == 0:
 
         response = paginated_response([],page,limit,total)
         return jsonify(response), 200
-    
-    contacts = list({'id':x[0],'name':x[1],'number':x[2]} for x in contactsRaw)
 
     response = paginated_response(contacts,page,limit,total)
     return jsonify(response), 200
