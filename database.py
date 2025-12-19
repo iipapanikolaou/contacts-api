@@ -27,14 +27,45 @@ def init_db():
     return not rows.fetchone() is None
 
 
+def get_contacts(page,limit):
+
+    conn = sqlite3.connect(DATABASE_FILENAME)
+    cursor = conn.cursor()
+
+    start_id = (page - 1)* limit + 1
+    end_id = start_id + limit - 1 
+
+    cursor.execute('SELECT id,name,number FROM contacts WHERE id >= ? AND id <= ? ',(start_id,end_id,))
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return rows
+
+def count_contacts():
+
+    conn = sqlite3.connect(DATABASE_FILENAME)
+    cursor = conn.cursor()
+
+    row = cursor.execute('SELECT COUNT(*) FROM contacts').fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return row[0]
+
 def get_contact_by_id(contact_id):
 
     conn = sqlite3.connect(DATABASE_FILENAME)
     cursor = conn.cursor()
 
-    rows = cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?', contact_id)
+    row = cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?', contact_id).fetchone()
+
+    cursor.close()
+    conn.close()
     
-    return rows.fetchone()
+    return row
 
 def create_contact(name, number):
 
@@ -55,23 +86,32 @@ def update_contact(contact_id, name, number):
     conn = sqlite3.connect(DATABASE_FILENAME)
     cursor = conn.cursor()
 
-    cursor.execute('UPDATE contacts SET name = ?, number = ? WHERE id = ?',(name, number, contact_id,))
+    try:
+        cursor.execute('UPDATE contacts SET name = ?, number = ? WHERE id = ?',(name, number, contact_id,))
+        conn.commit()
+    except sqlite3.Error:
+        cursor.close()
+        conn.close()
+        return None
     
-    if cursor.rowcount == 1:
-        cursor.commit()
-        return cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?', contact_id).fetchone()
-    
-    return None
+    row = get_contact_by_id(contact_id)
+    cursor.close()
+    conn.close()
+    return row
     
 def delete_contact(contact_id):
 
     conn = sqlite3.connect(DATABASE_FILENAME)
     cursor = conn.cursor()
 
-    cursor.execute('DELETE FROM contacts WHERE id = ?',(contact_id,))
-    conn.commit()
-
-    if cursor.rowcount == 1:
-        return True
+    try:
+        cursor.execute('DELETE FROM contacts WHERE id = ?',(contact_id,))
+        conn.commit()
+    except sqlite3.Error:
+        cursor.close()
+        conn.close()
+        return False
     
-    return False
+    cursor.close()
+    conn.close()
+    return True
