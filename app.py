@@ -113,16 +113,10 @@ def list_contacts():
 @app.get("/contacts/<int:id>")
 def list_contact(id):
 
-    contactRaw = get_contact_by_id(id)
+    contact = get_contact_by_id(id)
 
-    if not contactRaw:
+    if not contact:
         abort(404)
-    
-    contact = {
-        'id' : int(contactRaw[0]),
-        'name' : contactRaw[1],
-        'number' : contactRaw[2]
-    }
 
     response = success_response(contact)
 
@@ -140,22 +134,18 @@ def add_contact():
     contactNumber = payload.get("number")
 
     if contactName and contactNumber:
-        
-        contactRaw = create_contact(contactName,contactNumber)
 
-        if not contactRaw:
+        createdContactId = create_contact(contactName,contactNumber)
+
+        if not createdContactId:
             abort(500)
-        
-        newContact = {
-            'id' : int(contactRaw[0]),
-            'name' : contactRaw[1],
-            'number' : contactRaw[2]
-        }
 
-        response = success_response(newContact)
+        createdContact = get_contact_by_id(createdContactId)
+
+        response = success_response(createdContact)
 
         return jsonify(response), 201
-    
+
     abort(400)
 
 
@@ -175,19 +165,12 @@ def edit_contact(id):
     contactName = payload.get("name") if payload.get("name") else contact[1]
     contactNumber = payload.get("number") if payload.get("number") else contact[2]
 
-    contactRaw = update_contact(id,contactName,contactNumber)
-
-
-    if not contactRaw:
+    if not update_contact(id,contactName,contactNumber):
         abort(500)
-    
-    newContact = {
-        'id' : int(contactRaw[0]),
-        'name' : contactRaw[1],
-        'number' : contactRaw[2]
-    }
 
-    response = success_response(newContact)
+    updatedContact = get_contact_by_id(id)
+
+    response = success_response(updatedContact)
 
     return jsonify(response), 201
 

@@ -64,7 +64,7 @@ def get_contact_by_id(contact_id):
     cursor.close()
     conn.close()
     
-    return row
+    return map_values_to_contact(row) if row else None
 
 def create_contact(name, number):
 
@@ -78,12 +78,8 @@ def create_contact(name, number):
         cursor.close()
         conn.close()
         return None
-
-    newRowId = cursor.lastrowid
-
-    cursor.close()
-    conn.close()
-    return get_contact_by_id(newRowId)
+    
+    return cursor.lastrowid
 
 def update_contact(contact_id, name, number):
 
@@ -98,10 +94,10 @@ def update_contact(contact_id, name, number):
         conn.close()
         return None
     
-    row = get_contact_by_id(contact_id)
+
     cursor.close()
     conn.close()
-    return row
+    return True
     
 def remove_contact(contact_id):
 
@@ -119,3 +115,26 @@ def remove_contact(contact_id):
     cursor.close()
     conn.close()
     return True
+
+def map_values_to_contact(row):
+
+    if not row:
+        return None
+
+    contact = {
+        'id' : int(row[0]),
+        'name' : row[1],
+        'number' : row[2]
+    }
+
+    return contact
+
+def map_rows_to_contacts(rows):
+
+    contacts = []
+
+    for row in rows:
+        contact = map_values_to_contact(row)
+        contacts.append(contact)
+
+    return contacts
