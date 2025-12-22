@@ -83,12 +83,12 @@ def handle_validation_error(e):
 
     return jsonify(response), 400
 
-@app.errorhandler(Exception)
-def catch_unhandled_errors(e):
+# @app.errorhandler(Exception)
+# def catch_unhandled_errors(e):
 
-    response = errorResponse(str(e),500)
+#     response = errorResponse(str(e),500)
 
-    return jsonify(response), 500
+#     return jsonify(response), 500
 
 
 @app.get("/contacts")
