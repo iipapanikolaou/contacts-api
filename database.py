@@ -17,13 +17,49 @@ def init_db():
         """)
         conn.commit()
 
-def get_contacts(page,limit):
+def get_contacts(page,limit,arguments:list):
 
     offset_rows = (page - 1) * limit
 
+    search_arg = arguments.get('search','%%')
+
+    query_params_list = [search_arg]
+
+    try:
+        arguments.remove('search')
+    except ValueError:
+        pass
+    try:
+        arguments.remove('page')
+    except ValueError:
+        pass
+    try:
+        arguments.remove('limit')
+    except ValueError:
+        pass
+    
+    where_clause = 'WHERE name LIKE ? '
+
+    for key,value in arguments:
+        where_clause += f'AND {key} = ? '
+        query_params_list.append(value)
+
+    sql_query = """
+    SELECT id, name, number 
+    FROM contacts
+    """ + where_clause + """
+    ORDER BY id 
+    ASC LIMIT ? 
+    OFFSET ?
+    """
+    query_params_list.append(limit)
+    query_params_list.append(offset_rows)
+
+    query_params_tuple = tuple(query_params_list)
+
     with sqlite3.connect(DATABASE_FILENAME) as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT id, name, number FROM contacts ORDER BY id ASC LIMIT ? OFFSET ?',(limit,offset_rows,))
+        cursor.execute(sql_query,query_params_tuple)
         rows = cursor.fetchall()
     
     return map_rows_to_contacts(rows)
@@ -49,7 +85,7 @@ def create_contact(name, number):
 
     with sqlite3.connect(DATABASE_FILENAME) as conn:
         cursor = conn.cursor()
-        cursor.execute('INSERT INTO contacts (name,number) VALUES(?,?)',(name,number,))
+        cursor.execute('INSERT INTO contacts (name, number) VALUES(?,?)',(name,number,))
         conn.commit()
     
     return cursor.lastrowid

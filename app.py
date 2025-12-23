@@ -6,7 +6,7 @@
 
 from flask import Flask, request, jsonify, abort
 import database as db
-from validation import validate_data, ValidationError
+from validation import validate_data, ValidationError,validate_pagination_arguments,validate_arguments
 
 app = Flask(__name__)
 
@@ -94,14 +94,11 @@ def handle_validation_error(e):
 @app.get("/contacts")
 def list_contacts():
 
-    try:
-        page = int(request.args.get("page", 1))
-        limit = int(request.args.get("limit", 5))
-    except ValueError:
-        abort(400)
-
-    if page <= 0 or limit <= 0:
-        abort(400)
+    request_arguments = request.args
+    page = request_arguments.get("page", 1)
+    limit = request_arguments.get("limit", 5)
+    validate_pagination_arguments(page,limit)
+    validate_arguments(request_arguments)
 
     contacts = db.get_contacts(page,limit)
     total = db.count_contacts()
