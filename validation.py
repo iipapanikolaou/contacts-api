@@ -58,10 +58,10 @@ def validate_pagination_arguments(page,limit) -> None:
         page = int(page)
         limit = int(limit)
     except ValueError:
-        raise ValidationError('Pagination arguments PAGE/LIMIT should both be non-zero, non-negative integers')
+        raise ValidationError('Invalid pagination arguments.')
     
     if page <= 0 or limit <= 0:
-        raise ValidationError('Pagination arguments PAGE/LIMIT should both be non-zero, non-negative integers')
+        raise ValidationError('Pagination arguments should be non-zero, non-negative integers')
     
     return
 
@@ -71,7 +71,7 @@ def validate_arguments (arguments:list) -> None:
 
         try:
             if str(arg).lower() not in ACCEPTABLE_QUERY_ARGUMENTS:
-                raise ValidationError("Invalid query parameters")
+                raise ValidationError("Query includes one or more unknown parameters.")
         except TypeError: # a query parameter includes characters outside of [A-Za-z]
             raise ValidationError("Invalid query parameters")
     

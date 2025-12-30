@@ -64,22 +64,26 @@ def get_contacts(page,limit,arguments:list):
     
     return map_rows_to_contacts(rows)
 
-def count_contacts(arguments:list):
+def count_contacts(query_arguments:list):
 
-    search_arg = arguments.get('search','%%')
+    args = query_arguments.copy()
 
-    query_params_list = [search_arg]
+    query_params_list = []
+
+    name_arg = args.get('search','%%')
+
+    query_arguments.append(name_arg)
 
     try:
-        arguments.remove('search')
+        args.remove('search')
     except ValueError:
         pass
     try:
-        arguments.remove('page')
+        args.remove('page')
     except ValueError:
         pass
     try:
-        arguments.remove('limit')
+        args.remove('limit')
     except ValueError:
         pass
     

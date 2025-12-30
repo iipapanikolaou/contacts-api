@@ -147,12 +147,12 @@ def edit_contact(id):
 
     payload = request.get_json(silent=True)
 
-    validated_data = validate_data(payload, 'PUT')
+    validated_data = validate_data(data = payload, method = 'PUT')
 
     contactName = validated_data.get("name") if validated_data.get("name") else contact['name']
     contactNumber = validated_data.get("number") if validated_data.get("number") else contact['number']
 
-    if not db.update_contact(id,contactName,contactNumber):
+    if not db.update_contact(id = id, name = contactName, number = contactNumber):
         abort(500)
 
     updatedContact = db.get_contact_by_id(id)
