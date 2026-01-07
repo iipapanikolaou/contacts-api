@@ -1,6 +1,6 @@
 import re
 
-JSON_ATTRIBUTES = {'name', 'number'}
+PAYLOAD_FIELDS = {'name', 'number'}
 ACCEPTABLE_QUERY_ARGUMENTS = {'page','limit','search','number'}
 
 class ValidationError(Exception):
@@ -12,10 +12,10 @@ def validate_data(data,request_method):
 
     if request_method == 'POST':
 
-        if len(data_keys) != len(JSON_ATTRIBUTES):
+        if len(data_keys) != len(PAYLOAD_FIELDS):
             raise ValidationError("Invalid number of fields.")
 
-        if not JSON_ATTRIBUTES.issubset(data_keys):
+        if not PAYLOAD_FIELDS.issubset(data_keys):
             raise ValidationError("Missing required fields.")
 
         if not name_is_valid(data['name']):
@@ -26,10 +26,10 @@ def validate_data(data,request_method):
 
     elif request_method == 'PUT':
 
-        if len(data_keys) > len(JSON_ATTRIBUTES):
+        if len(data_keys) > len(PAYLOAD_FIELDS):
             raise ValidationError("Invalid number of fields.")
 
-        if not data_keys.issubset(JSON_ATTRIBUTES):
+        if not data_keys.issubset(PAYLOAD_FIELDS):
             raise ValidationError("Missing required fields.")
 
         if not name_is_valid(data.get('name')):
@@ -72,18 +72,11 @@ def validate_pagination_arguments(page,limit) -> None:
         raise ValidationError('Invalid pagination arguments.')
     
     if page <= 0 or limit <= 0:
-        raise ValidationError('Pagination arguments should be non-zero, non-negative integers')
+        raise ValidationError('Pagination arguments should be positive integers')
     
     return
 
 def validate_arguments (arguments:list) -> None:
 
-    for arg in arguments:
-
-        try:
-            if str(arg).lower() not in ACCEPTABLE_QUERY_ARGUMENTS:
-                raise ValidationError("Query includes one or more unknown parameters.")
-        except TypeError: # a query parameter includes characters outside of [A-Za-z]
-            raise ValidationError("Invalid query parameters")
-    
-    return
+    if not set(arguments).issubset(ACCEPTABLE_QUERY_ARGUMENTS):
+        raise ValidationError("Request includes one or more unknown arguments.")

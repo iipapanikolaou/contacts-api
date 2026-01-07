@@ -17,32 +17,33 @@ def init_db():
         """)
         conn.commit()
 
-def get_contacts(page,limit,arguments:list):
+def get_contacts(page,limit,arguments):
 
     offset_rows = (page - 1) * limit
 
     search_arg = arguments.get('search','%%')
 
-    query_params_list = [search_arg]
-
-    try:
-        arguments.remove('search')
-    except ValueError:
-        pass
-    try:
-        arguments.remove('page')
-    except ValueError:
-        pass
-    try:
-        arguments.remove('limit')
-    except ValueError:
-        pass
-    
     where_clause = 'WHERE name LIKE ? '
 
-    for key,value in arguments:
+    query_placeholder_values = [search_arg]
+
+    args = arguments.copy()
+    try:
+        del args['search']
+    except KeyError:
+        pass
+    try:
+        del args['page']
+    except KeyError:
+        pass
+    try:
+        del args['limit']
+    except KeyError:
+        pass
+
+    for key,value in args.items():
         where_clause += f'AND {key} = ? '
-        query_params_list.append(value)
+        query_placeholder_values.append(value)
 
     sql_query = """
     SELECT id, name, number 
@@ -52,58 +53,64 @@ def get_contacts(page,limit,arguments:list):
     LIMIT ?
     OFFSET ?
     """
-    query_params_list.append(limit)
-    query_params_list.append(offset_rows)
 
-    query_params_tuple = tuple(query_params_list)
+    print(sql_query)
+
+    query_placeholder_values.append(limit)
+    query_placeholder_values.append(offset_rows)
+
+    query_params_tuple = tuple(query_placeholder_values)
 
     with sqlite3.connect(DATABASE_FILENAME) as conn:
         cursor = conn.cursor()
         cursor.execute(sql_query,query_params_tuple)
         rows = cursor.fetchall()
-    
-    return map_rows_to_contacts(rows)
+
+    contacts = map_rows_to_contacts(rows)
+
+    return contacts
 
 def count_contacts(query_arguments:list):
 
     args = query_arguments.copy()
 
-    query_params_list = []
-
-    name_arg = args.get('search','%%')
-
-    query_arguments.append(name_arg)
-
-    try:
-        args.remove('search')
-    except ValueError:
-        pass
-    try:
-        args.remove('page')
-    except ValueError:
-        pass
-    try:
-        args.remove('limit')
-    except ValueError:
-        pass
-    
     where_clause = 'WHERE name LIKE ? '
 
-    for key,value in args:
+    name = args.get('search','%%')
+
+    placeholder_values = [name]
+
+    try:
+        del args['search']
+    except KeyError:
+        pass
+    try:
+        del args['page']
+    except KeyError:
+        pass
+    try:
+        del args['limit']
+    except KeyError:
+        pass
+
+    for key,value in args.items():
         where_clause += f'AND {key} = ? '
-        query_params_list.append(value)
+        placeholder_values.append(value)
+
+    placeholder_values_tuple = tuple(placeholder_values)
 
     sql_query = """
     SELECT COUNT(*) 
-    FROM contacts
+    FROM contacts 
     """ + where_clause
-    query_params_tuple = tuple(query_params_list)
 
     with sqlite3.connect(DATABASE_FILENAME) as conn:
         cursor = conn.cursor()
-        row = cursor.execute(sql_query,query_params_tuple).fetchone()
-    
-    return row[0]
+        row = cursor.execute(sql_query,placeholder_values_tuple).fetchone()
+
+        total_contacts = row[0]
+
+    return total_contacts
 
 def get_contact_by_id(contact_id):
 
