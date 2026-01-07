@@ -15,7 +15,8 @@ def init_db():
                 name TEXT NOT NULL,
                 number TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                deleted_at DEFAULT NULL
             );
         """)
         conn.commit()
@@ -76,7 +77,7 @@ def get_contact_by_id(contact_id):
 
     with sqlite3.connect(DATABASE_FILENAME) as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?', (contact_id,))
+        cursor.execute('SELECT id,name,number FROM contacts WHERE id = ? AND deleted_at IS NULL', (contact_id,))
         row = cursor.fetchone()
     
     return map_values_to_contact(row) if row else None
@@ -103,10 +104,12 @@ def remove_contact(contact_id):
 
     with sqlite3.connect(DATABASE_FILENAME) as conn:
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM contacts WHERE id = ?',(contact_id,))
+        cursor.execute('UPDATE contacts SET updated_at = CURRENT_TIMESTAMP, deleted_at = CURRENT_TIMESTAMP WHERE id = ?',(contact_id,))
         conn.commit()
+
+    affected_rows = cursor.rowcount
     
-    return cursor.rowcount > 0
+    return affected_rows
 
 def map_values_to_contact(row):
 
@@ -140,7 +143,7 @@ def create_where_clause(arguments:list, placeholder_values:list) -> tuple[str,li
         if key not in ['page','limit']
     }
 
-    conditional_clauses = []
+    conditional_clauses = ['deleted_at IS NULL']
 
     if 'search' in args:
         conditional_clauses.append(FILTERS['search'])
