@@ -22,32 +22,9 @@ def init_db():
 
 def get_contacts(page:int,limit:int,arguments:list):
 
-    offset_rows = (page - 1) * limit
-
-    args = arguments.copy()
-    try:
-        del args['page']
-    except KeyError:
-        pass
-    try:
-        del args['limit']
-    except KeyError:
-        pass
-
-    conditional_clauses = []
     placeholder_values = []
 
-    if 'search' in args:
-        conditional_clauses.append(FILTERS['search'])
-        placeholder_values.append(f'%{args.get("search","")}%')
-        del args['search']
-
-    for key in args.keys():
-        if key in FILTERS.keys():
-            conditional_clauses.append(FILTERS[key])
-            placeholder_values.append(args[key])
-
-    where_clause = 'WHERE ' + ' AND '.join(conditional_clauses) + ' ' if conditional_clauses else ''
+    where_clause = create_where_clause(arguments,placeholder_values)
 
     sql_query = """
     SELECT id, name, number 
@@ -58,16 +35,16 @@ def get_contacts(page:int,limit:int,arguments:list):
     OFFSET ?
     """
 
-    print(sql_query)
+    offset_rows = (page - 1) * limit
 
     placeholder_values.append(limit)
     placeholder_values.append(offset_rows)
 
-    query_params_tuple = tuple(placeholder_values)
+    placeholder_values_tuple = tuple(placeholder_values)
 
     with sqlite3.connect(DATABASE_FILENAME) as conn:
         cursor = conn.cursor()
-        cursor.execute(sql_query,query_params_tuple)
+        cursor.execute(sql_query,placeholder_values_tuple)
         rows = cursor.fetchall()
 
     contacts = map_rows_to_contacts(rows)
@@ -76,37 +53,16 @@ def get_contacts(page:int,limit:int,arguments:list):
 
 def count_contacts(arguments:list):
 
-    args = arguments.copy()
-    try:
-        del args['page']
-    except KeyError:
-        pass
-    try:
-        del args['limit']
-    except KeyError:
-        pass
-
-    conditional_clauses = []
     placeholder_values = []
 
-    if 'search' in args:
-        conditional_clauses.append(FILTERS['search'])
-        placeholder_values.append(f'%{args.get("search","")}%')
-        del args['search']
-
-    for key in args.keys():
-        if key in FILTERS.keys():
-            conditional_clauses.append(FILTERS[key])
-            placeholder_values.append(args[key])
-
-    where_clause = 'WHERE ' + ' AND '.join(conditional_clauses) + ' ' if conditional_clauses else ''
-
-    placeholder_values_tuple = tuple(placeholder_values)
+    where_clause = create_where_clause(arguments,placeholder_values)
 
     sql_query = """
     SELECT COUNT(*) 
     FROM contacts 
     """ + where_clause
+
+    placeholder_values_tuple = tuple(placeholder_values)
 
     with sqlite3.connect(DATABASE_FILENAME) as conn:
         cursor = conn.cursor()
@@ -177,3 +133,25 @@ def map_rows_to_contacts(rows):
         contacts.append(contact)
 
     return contacts
+
+def create_where_clause(arguments:list, placeholder_values:list) -> tuple[str,list]:
+    args = {
+        key:value for key,value in arguments.items()
+        if key not in ['page','limit']
+    }
+
+    conditional_clauses = []
+
+    if 'search' in args:
+        conditional_clauses.append(FILTERS['search'])
+        placeholder_values.append(f'%{args.get("search","")}%')
+        del args['search']
+
+    for key in args.keys():
+        if key in FILTERS.keys():
+            conditional_clauses.append(FILTERS[key])
+            placeholder_values.append(args[key])
+
+    where_clause = 'WHERE ' + ' AND '.join(conditional_clauses) + ' ' if conditional_clauses else ''
+
+    return where_clause
