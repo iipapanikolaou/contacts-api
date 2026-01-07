@@ -2,6 +2,9 @@ import sqlite3
 
 DATABASE_FILENAME = 'contacts.db'
 
+FILTERS = {'search': 'name LIKE ?',
+           'number': 'number = ?'}
+
 def init_db():
 
     with sqlite3.connect(DATABASE_FILENAME) as conn:
@@ -17,22 +20,11 @@ def init_db():
         """)
         conn.commit()
 
-def get_contacts(page,limit,arguments):
-
-    args = arguments.copy()
+def get_contacts(page:int,limit:int,arguments:list):
 
     offset_rows = (page - 1) * limit
 
-    name = f'%{args.get("search","")}%'
-
-    where_clause = 'WHERE name LIKE ? '
-
-    query_placeholder_values = [name]
-
-    try:
-        del args['search']
-    except KeyError:
-        pass
+    args = arguments.copy()
     try:
         del args['page']
     except KeyError:
@@ -42,9 +34,20 @@ def get_contacts(page,limit,arguments):
     except KeyError:
         pass
 
-    for key,value in args.items():
-        where_clause += f'AND {key} = ? '
-        query_placeholder_values.append(value)
+    conditional_clauses = []
+    placeholder_values = []
+
+    if 'search' in args:
+        conditional_clauses.append(FILTERS['search'])
+        placeholder_values.append(f'%{args.get("search","")}%')
+        del args['search']
+
+    for key in args.keys():
+        if key in FILTERS.keys():
+            conditional_clauses.append(FILTERS[key])
+            placeholder_values.append(args[key])
+
+    where_clause = 'WHERE ' + ' AND '.join(conditional_clauses) + ' ' if conditional_clauses else ''
 
     sql_query = """
     SELECT id, name, number 
@@ -57,10 +60,10 @@ def get_contacts(page,limit,arguments):
 
     print(sql_query)
 
-    query_placeholder_values.append(limit)
-    query_placeholder_values.append(offset_rows)
+    placeholder_values.append(limit)
+    placeholder_values.append(offset_rows)
 
-    query_params_tuple = tuple(query_placeholder_values)
+    query_params_tuple = tuple(placeholder_values)
 
     with sqlite3.connect(DATABASE_FILENAME) as conn:
         cursor = conn.cursor()
@@ -71,20 +74,9 @@ def get_contacts(page,limit,arguments):
 
     return contacts
 
-def count_contacts(query_arguments:list):
+def count_contacts(arguments:list):
 
-    args = query_arguments.copy()
-
-    where_clause = 'WHERE name LIKE ? '
-
-    name = f'%{args.get("search","")}%'
-
-    placeholder_values = [name]
-
-    try:
-        del args['search']
-    except KeyError:
-        pass
+    args = arguments.copy()
     try:
         del args['page']
     except KeyError:
@@ -94,9 +86,20 @@ def count_contacts(query_arguments:list):
     except KeyError:
         pass
 
-    for key,value in args.items():
-        where_clause += f'AND {key} = ? '
-        placeholder_values.append(value)
+    conditional_clauses = []
+    placeholder_values = []
+
+    if 'search' in args:
+        conditional_clauses.append(FILTERS['search'])
+        placeholder_values.append(f'%{args.get("search","")}%')
+        del args['search']
+
+    for key in args.keys():
+        if key in FILTERS.keys():
+            conditional_clauses.append(FILTERS[key])
+            placeholder_values.append(args[key])
+
+    where_clause = 'WHERE ' + ' AND '.join(conditional_clauses) + ' ' if conditional_clauses else ''
 
     placeholder_values_tuple = tuple(placeholder_values)
 
